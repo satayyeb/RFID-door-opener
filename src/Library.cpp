@@ -1,4 +1,5 @@
 #include "Library.h"
+#include "Controller.h"
 
 
 Library::Library() {
@@ -6,7 +7,7 @@ Library::Library() {
     // Init MFRC522
     SPI.begin();
     rfid.PCD_Init();
-    Serial.println("Loading cards from EEPROM...");
+    Controller::log("Loading cards from EEPROM...");
     char json_string[1000];
     EEPROM.get(600, json_string);
     StaticJsonDocument<1000> doc;

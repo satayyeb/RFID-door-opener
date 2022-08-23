@@ -5,6 +5,7 @@
 #include "Card.h"
 #include "hardwareConfig.h"
 
+
 class Library {
 private:
     MFRC522::MIFARE_Key mifare_key;

@@ -18,6 +18,8 @@ void Controller::log(String log) {
 }
 
 String Controller::get_last_log() {
+    if (logs.empty())
+        return "No log";
     return logs.back();
 }
 
