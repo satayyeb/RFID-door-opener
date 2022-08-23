@@ -4,7 +4,7 @@
 #include <ArduinoJSON.h>
 #include <EEPROM.h>
 #include <ESP8266WiFi.h>
-
+#include "Logger.h"
 
 
 #define DEFAULT_SSID "esp"
@@ -16,6 +16,7 @@
 
 class Settings {
 private:
+    Logger* logger;
     const int settings_string_size = 300;
 public:
     IPAddress subnet = IPAddress(255, 255, 255, 0);
@@ -25,7 +26,7 @@ public:
     String login_user;
     String login_pass;
 
-    Settings();
+    Settings(Logger* logger);
     void write_defaults_into_eeprom();
     void load_settings_from_eeprom();
     void update_settings_in_eeprom();

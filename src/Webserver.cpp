@@ -1,15 +1,14 @@
 #include "Webserver.h"
 
 
-Webserver::Webserver(Settings* settings, Controller* controller, Library* library) {
+Webserver::Webserver(Settings* settings, Controller* controller, Library* library, Logger* logger) {
     this->controller = controller;
     this->library = library;
+    this->logger = logger;
     LittleFS.begin();
     WiFi.softAPConfig(settings->ip, settings->ip, settings->subnet);
     WiFi.softAP(settings->wifi_ssid, settings->wifi_pass);
-    IPAddress myIP = WiFi.softAPIP();
-    Serial.print("Access Point started at: ");
-    Serial.println(myIP);
+    logger->log("Access Point started at: " + WiFi.softAPIP().toString());
     configure_server_routings();
     server.begin();
 }

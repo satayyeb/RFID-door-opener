@@ -4,10 +4,13 @@
 #include <MFRC522.h>
 #include "Card.h"
 #include "hardwareConfig.h"
+#include "Logger.h"
+
 
 
 class Library {
 private:
+    Logger* logger;
     MFRC522::MIFARE_Key mifare_key;
     MFRC522::StatusCode mifare_status;
     std::vector<Card> cards;
@@ -16,7 +19,7 @@ private:
     bool update_cards_on_eeprom();
 public:
     MFRC522 rfid;
-    Library();
+    Library(Logger* logger);
     std::vector<Card> getCards();
     bool check_card();
     bool reset_card(Card card);

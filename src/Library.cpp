@@ -2,18 +2,19 @@
 #include "Controller.h"
 
 
-Library::Library() {
+Library::Library(Logger* logger) {
+    this->logger = logger;
     rfid = MFRC522(SS_MFRC, RST_MFRC);
     // Init MFRC522
     SPI.begin();
     rfid.PCD_Init();
-    Controller::log("Loading cards from EEPROM...");
+    logger->log("Loading cards from EEPROM...");
     char json_string[1000];
     EEPROM.get(600, json_string);
     StaticJsonDocument<1000> doc;
     DeserializationError error = deserializeJson(doc, json_string);
     if (error != DeserializationError::Ok)
-        Serial.println("There is no cards in the EEPROM.");
+        logger->log("There is no cards in the EEPROM.");
     else {
         for (JsonObject card : doc["cards"].as<JsonArray>()) {
             const char* card_name = card["card_name"];
@@ -56,14 +57,14 @@ bool Library::reset_card(Card card) {
                         break;
                     }
                 update_cards_on_eeprom();
-                Serial.println("The card has been reset successfully.");
+                logger->log("The card has been reset successfully.");
                 return true;
             }
-            Serial.println("An error occurred while reseting the card.");
+            logger->log("An error occurred while reseting the card.");
             return false;
         }
         else {
-            Serial.println("Can not reset an unknown card.");
+            logger->log("Can not reset an unknown card.");
             return false;
         }
     }
@@ -73,7 +74,7 @@ bool Library::reset_card(Card card) {
 bool Library::write_key_on_card(Card card) {
     if (rfid.PICC_IsNewCardPresent() and rfid.PICC_ReadCardSerial()) {
         if (check_card()) {
-            Serial.println("This card is learned before.");
+            logger->log("This card is learned before.");
             rfid.PICC_HaltA();
             rfid.PCD_StopCrypto1();
             return false;
@@ -88,7 +89,7 @@ bool Library::write_key_on_card(Card card) {
                 break;
             sector_number++;
             if (sector_number == 16) {
-                Serial.println("Can not find an empty sector.");
+                logger->log("Can not find an empty sector.");
                 return false;
             }
         }
@@ -109,11 +110,11 @@ bool Library::write_key_on_card(Card card) {
         if (mifare_status == MFRC522::STATUS_OK) {
             rfid.PICC_HaltA();
             rfid.PCD_StopCrypto1();
-            Serial.println("Writing on card was successfull.");
+            logger->log("Writing on card was successfull.");
             return true;
         }
     }
-    Serial.println("Error at Writing on card.");
+    logger->log("Error at Writing on card.");
     return false;
 }
 
@@ -132,10 +133,10 @@ bool Library::update_cards_on_eeprom() {
     serializeJson(doc, json_string, sizeof(json_string));
     EEPROM.put(600, json_string);
     if (EEPROM.commit()) {
-        Serial.println("EEPROM updated successfully.");
+        logger->log("EEPROM updated successfully.");
         return true;
     }
-    Serial.println("An error occurred while updating the EEPROM.");
+    logger->log("An error occurred while updating the EEPROM.");
     return false;
 }
 
@@ -143,7 +144,7 @@ bool Library::remove_card(int index) {
     cards.erase(cards.begin() + index);
     //Exception handling is disabled. So this exception cannot be handled. Be careful when using this function.
     //If you don't see next print, the application has aborted by an out of index error.
-    Serial.println("Card removed successfully.");
+    logger->log("Card removed successfully.");
     update_cards_on_eeprom();
     return true;
 }

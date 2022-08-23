@@ -1,32 +1,17 @@
 #include "Controller.h"
 
 
-Controller::Controller() {
-
-}
-
-Controller::Controller(Settings* settings, Library* library) {
+Controller::Controller(Settings* settings, Library* library, Logger* logger) {
     this->settings = settings;
     this->library = library;
-}
-
-void Controller::log(String log) {
-    Serial.println(log);
-    logs.push(log);
-    while (logs.size() >= 20)
-        logs.pop();
-}
-
-String Controller::get_last_log() {
-    if (logs.empty())
-        return "No log";
-    return logs.back();
+    this->logger = logger;
 }
 
 
 void Controller::reboot() {
     ESP.restart();
 }
+
 
 void Controller::open_door() {
     digitalWrite(DOOR_RELAY, HIGH);

@@ -9,17 +9,18 @@
 #include "Webserver.h"
 #include "Settings.h"
 #include "Library.h"
+#include "Logger.h"
 #include "Card.h"
 
 
 void handel_card_scan();
-void dumpEEPROM(int size);
 
 
-Settings settings;
-Library library;
-Controller controller(&settings, &library);
-Webserver webserver(&settings, &controller, &library);
+Logger logger;
+Settings settings(&logger);
+Library library(&logger);
+Controller controller(&settings, &library, &logger);
+Webserver webserver(&settings, &controller, &library, &logger);
 
 
 void setup() {
@@ -50,7 +51,7 @@ void loop() {
 	// handel scaned card:
 	if (library.rfid.PICC_IsNewCardPresent() and library.rfid.PICC_ReadCardSerial()) {
 		if (RFID_lock)
-			Serial.println("System is locked.");
+			logger.log("System is locked.");
 		else
 			handel_card_scan();
 		library.rfid.PICC_HaltA();
@@ -70,7 +71,7 @@ void loop() {
 		timer = millis();
 	}
 	if (reset_pin_state == HIGH and (millis() - timer > 10 * 1000)) {
-		Serial.println("Factory reset in progress...");
+		logger.log("Factory reset in progress...");
 		controller.factory_reset();
 	}
 }
@@ -78,15 +79,15 @@ void loop() {
 
 void handel_card_scan() {
 	if (library.check_card()) {
-		Serial.println("WELCOME");
+		logger.log("WELCOME");
 		controller.open_door();
 		count_false_cards = 0;
 	}
 	else {
-		Serial.println("card is unknown.");
+		logger.log("card is unknown.");
 		count_false_cards++;
 		if (count_false_cards == 3) {
-			Serial.println("several failed attempts. system is locked now.");
+			logger.log("several failed attempts. system is locked now.");
 			RFID_lock = true;
 			lockMillis = millis();
 		}
