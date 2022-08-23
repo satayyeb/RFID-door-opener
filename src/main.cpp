@@ -19,7 +19,7 @@ void dumpEEPROM(int size);
 Settings settings;
 Library library;
 Controller controller(&settings, &library);
-Webserver webserver(&settings, &controller);
+Webserver webserver(&settings, &controller, &library);
 
 
 void setup() {

@@ -1,8 +1,9 @@
 #include "Webserver.h"
 
 
-Webserver::Webserver(Settings* settings, Controller* controller) {
+Webserver::Webserver(Settings* settings, Controller* controller, Library* library) {
     this->controller = controller;
+    this->library = library;
     LittleFS.begin();
     WiFi.softAPConfig(settings->ip, settings->ip, settings->subnet);
     WiFi.softAP(settings->wifi_ssid, settings->wifi_pass);
@@ -52,6 +53,12 @@ void Webserver::configure_server_routings() {
     server.on("/reboot", [&]()
         { server.send(200, "text/html", "rebooting...");
     controller->reboot(); });
+
+    server.on("/learn", [&]() {
+        Card card("card");
+        library.add_card(card);
+        server.send(200, "text/html", "rebooting...");
+        });
 }
 
 void Webserver::handelRequest() {
