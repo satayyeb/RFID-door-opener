@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>RFID Door Opener</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <script src="js/home-script.js"></script>
+    <script src="js/loader.js"></script>
+
+    <script>
+        loadHeaderAndFooter();
+    </script>
+</head>
+
+<body>
+
+    <!-- Header and Navigation Bar -->
+    <div id="header"></div>
+
+    <!-- The flexible grid (content) -->
+    <div class="row">
+        <div class="side">
+            <h2>HOME</h2>
+            <h5 style="padding-right: 5px; padding-left: 5px;">Select another menu to configure settings.</h5>
+        </div>
+        <div id="main" class="main">
+            <h1>Status: OK</h1>
+            <input type="button" class="home-button" onclick="openDoor()" value="Open door"/>
+            <input type="button" class="home-button" value="Reboot" onclick="location.href='reboot'"/>
+            <input type="button" class="home-button" onclick="troubleshoot()" value="troubleshoot"/>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div id="footer"></div>
+
+</body>
+
+</html>

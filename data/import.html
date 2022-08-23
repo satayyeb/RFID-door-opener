@@ -1,0 +1,17 @@
+<h1>Import settings</h1>
+<h4>upload your settings file here then click Import.</h4>
+<input type="file" id="settings" accept=".bin" />
+<Button class="button" onclick="importSettings()">Import</Button>
+
+<script>
+    function importSettings() {
+        var uploadField = document.getElementById("settings");
+        uploadField.onchange = function () {
+            alert("ok");
+            if (this.files[0].size > 4096) {
+                alert("File is too big!");
+                this.value = "";
+            };
+        };
+    }
+</script>

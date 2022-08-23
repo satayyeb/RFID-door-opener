@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>RFID Door Opener</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="style.css">
+    <script src="js/rfid-script.js"></script>
+    <script src="js/loader.js"></script>
+
+    <script>
+        loadHeaderAndFooter();
+    </script>
+</head>
+
+<body>
+
+    <!-- Header and Navigation Bar -->
+    <div id="header"></div>
+
+    <!-- The flexible grid (content) -->
+    <div class="row">
+        <div class="side">
+            <h2>RFID MENU</h2>
+            <h5 style="padding-right: 5px; padding-left: 5px;">In this menu you can see RFID related settings. You can
+                manage your cards here.</h5>
+            <div class="navbar left_menu">
+                <a href="#" onclick="showAllCards()">Show all cards</a>
+                <a href="#" onclick="prepareLearn()">Learn a new card</a>
+                <a href="#" onclick="prepareDelete()">Delete a lost card</a>
+                <a href="#" onclick="prepareDeleteAll()">Delete all cards</a>
+                <a href="#" onclick="prepareReset()">Reset a card</a>
+                <a href="#" onclick="prepareChangeSector()">Change sector</a>
+            </div>
+        </div>
+        <div id="main" class="main"></div>
+
+    </div>
+
+    <!-- Footer -->
+    <div id="footer"></div>
+
+</body>
+
+</html>
