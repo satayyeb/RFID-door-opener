@@ -56,7 +56,7 @@ void Webserver::configure_server_routings() {
 
     server.on("/learn", [&]() {
         Card card("card");
-        library.add_card(card);
+        library->add_card(card);
         server.send(200, "text/html", "rebooting...");
         });
 }
