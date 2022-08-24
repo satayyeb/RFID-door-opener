@@ -48,14 +48,17 @@ void loop() {
 	// handel http request:
 	webserver.handelRequest();
 
-	// handel scaned card:
-	if (library.rfid.PICC_IsNewCardPresent() and library.rfid.PICC_ReadCardSerial()) {
-		if (RFID_lock)
-			logger.log("System is locked.");
-		else
-			handel_card_scan();
-		library.rfid.PICC_HaltA();
-		library.rfid.PCD_StopCrypto1();
+	
+	if (!library.is_modifying) {
+		// handel scaned card:
+		if (library.rfid.PICC_IsNewCardPresent() and library.rfid.PICC_ReadCardSerial()) {
+			if (RFID_lock)
+				logger.log("System is locked.");
+			else
+				handel_card_scan();
+			library.rfid.PICC_HaltA();
+			library.rfid.PCD_StopCrypto1();
+		}
 	}
 
 	// Locking timer of RFID brute force attack:
@@ -86,7 +89,7 @@ void handel_card_scan() {
 	else {
 		logger.log("card is unknown.");
 		count_false_cards++;
-		if (count_false_cards == 3) {
+		if (count_false_cards == 5) {
 			logger.log("several failed attempts. system is locked now.");
 			RFID_lock = true;
 			lockMillis = millis();

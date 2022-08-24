@@ -7,8 +7,7 @@ function prepareLearn() {
 }
 
 function learn() {
-    //TODO: this
-    alert("hello world!");
+    window.location.href = '/learn';
 }
 
 function prepareReset() {

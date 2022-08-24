@@ -21,6 +21,7 @@ public:
     MFRC522 rfid;
     Library(Logger* logger);
     std::vector<Card> getCards();
+    bool is_modifying = false;
     bool check_card();
     bool reset_card(Card card);
     bool add_card(Card card);

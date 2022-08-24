@@ -113,8 +113,12 @@ bool Library::write_key_on_card(Card card) {
             logger->log("Writing on card was successfull.");
             return true;
         }
+        else {
+            logger->log("Can not Write on card.");
+            return false;
+        }
     }
-    logger->log("Error at Writing on card.");
+    logger->log("Card not detected for learning.");
     return false;
 }
 
@@ -129,11 +133,11 @@ bool Library::update_cards_on_eeprom() {
         for (int i = 0; i < 12; i++)
             key.add(card.key[i]);
     }
-    char json_string[1000] = {'\0'};
+    char json_string[1000] = { '\0' };
     serializeJson(doc, json_string, sizeof(json_string));
     EEPROM.put(600, json_string);
     if (EEPROM.commit()) {
-        logger->log("EEPROM updated successfully.");
+        logger->log("Card learned successfully.");
         return true;
     }
     logger->log("An error occurred while updating the EEPROM.");

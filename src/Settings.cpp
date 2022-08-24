@@ -6,9 +6,9 @@ Settings::Settings(Logger* logger) {
     this->logger = logger;
     Serial.begin(115200);
     EEPROM.begin(2048);
+    //for debug:
     Controller::dumpEEPROM(2048);
-
-    if (EEPROM.read(0) == 255) {
+    if (EEPROM.read(0) != '{') {
         logger->log("No system settings found on EEPROM. Writing defaults on it...");
         write_defaults_into_eeprom();
     }
@@ -25,8 +25,6 @@ void Settings::load_settings_from_eeprom() {
         logger->log("An error occurred during deserializing system settings. error: " + String(error.f_str()));
         exit(-1);
     }
-    //TODO: remove this:
-    // logger->log("[TEST REMOVE THIS]An error occurred during deserializing system settings. error: " + String(error.f_str()));
     ip.fromString(String(doc["ip"]));
     wifi_ssid = String(doc["wifi_ssid"]);
     wifi_pass = String(doc["wifi_pass"]);
