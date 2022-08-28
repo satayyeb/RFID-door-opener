@@ -6,11 +6,23 @@ Webserver::Webserver(Settings* settings, Controller* controller, Library* librar
     this->library = library;
     this->logger = logger;
     LittleFS.begin();
-    WiFi.softAPConfig(settings->ip, settings->ip, settings->subnet);
-    WiFi.softAP(settings->wifi_ssid, settings->wifi_pass);
-    logger->log("Access Point started at: " + WiFi.softAPIP().toString());
-    configure_server_routings();
-    server.begin();
+
+
+    // WiFi.mode(WIFI_AP_STA);
+
+    // WiFi.softAPConfig(settings->ip, settings->ip, settings->subnet);
+    // WiFi.softAP("ali", settings->wifi_pass, 11);
+    // logger->log("Access Point started at: " + WiFi.softAPIP().toString());
+    // WiFi.disconnect(true);
+    // WiFi.mode(WIFI_AP);
+    // WiFi.begin("tel", "hajiRouterHamRouterHayeGhadim");
+    // WiFi.begin("shatelmobile8242", "35108242");
+    // WiFi.mode(WIFI_STA);
+    // WiFi.begin("desktop", "asdfghjk");
+
+
+
+
 }
 
 String Webserver::get_file(String file_name) {
@@ -60,6 +72,10 @@ void Webserver::configure_server_routings() {
         { server.send(200, "text/html", get_file("wifi-settings.html")); });
 
 
+    // server.on("/favicon.ico", [&]() {
+    //     server.send(200, "image/png", get_file("favicon.ico"));
+    //     });
+
     server.on("/style.css", [&]()
         { server.send(200, "text/css", get_file("style.css")); });
 
@@ -73,21 +89,40 @@ void Webserver::configure_server_routings() {
     server.on("/js/system-script.js", [&]()
         { server.send(200, "application/javascript", get_file("js/system-script.js")); });
 
-
     server.on("/open", [&]() {
-        server.send(200, "text/html", get_file("index.html"));
+        server.sendHeader("Location", "/");
+        server.send(301, "text/html", "The door open successfully.");
         controller->open_door();
         });
     server.on("/reboot", [&]() {
-        server.send(200, "text/html", "rebooting...");
-        delay(500);
+        server.sendHeader("Location", "/");
+        server.send(301, "text/html", "System reboot is in progress...");
+        // delay(500);
         controller->reboot();
         });
     server.on("/learn", [&]() {
         Card card("card");
-        library->add_card(card);
-        server.send(200, "text/html", "<h1>" + logger->get_last_log() + "<h1>");
+        library->add_card(&card);
+        server.send(200, "text/html", logger->get_last_log());
         });
+    server.on("/reset", [&]() {
+        library->reset_card();
+        server.send(200, "text/html", logger->get_last_log());
+        });
+    server.on("/delete-all", [&]() {
+        library->remove_all_cards();
+        server.send(200, "text/html", logger->get_last_log());
+        });
+    server.on("/get-cards", [&]() {
+        String html = "<h1>Cards List</h1>\n<ul style='text-align: left;'>";
+        for (Card card : library->getCards())
+            html += "<li>" + card.card_name + "</li>\n";
+        html + "</ul>";
+        server.send(200, "text/html", html);
+        });
+
+
+
 }
 
 void Webserver::handelRequest() {

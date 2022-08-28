@@ -29,23 +29,22 @@ std::vector<Card> Library::getCards() {
     return cards;
 }
 
-bool Library::add_card(Card card) {
+bool Library::add_card(Card* card) {
     //TODO: eeprom full check
     if (write_key_on_card(card)) {
-        cards.push_back(card);
-        if (update_cards_on_eeprom())
+        cards.push_back(*card);
+        if (update_cards_on_eeprom()) {
+            logger->log("Card learned successfully.");
             return true;
-        else {
-            reset_card(card);
-            cards.pop_back();
         }
     }
     return false;
 }
 
-bool Library::reset_card(Card card) {
+bool Library::reset_card() {
     if (rfid.PICC_IsNewCardPresent() and rfid.PICC_ReadCardSerial()) {
         if (check_card()) {
+            Card card = get_card_by_scan();
             byte data_NormalKey[] = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x07, 0x80, 0x69, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
             mifare_status = rfid.MIFARE_Write(sectors[card.sector], data_NormalKey, 16);
             if (mifare_status == MFRC522::STATUS_OK) {
@@ -68,11 +67,31 @@ bool Library::reset_card(Card card) {
             return false;
         }
     }
+    logger->log("Card not detected for reseting.");
     return false;
 }
 
-bool Library::write_key_on_card(Card card) {
-    if (rfid.PICC_IsNewCardPresent() and rfid.PICC_ReadCardSerial()) {
+Card Library::get_card_by_scan() {
+    for (Card card : cards) {
+        for (int i = 0; i < 6; i++) //key A
+            mifare_key.keyByte[i] = card.key[i];
+        mifare_status = rfid.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, sectors[card.sector], &mifare_key, &(rfid.uid));
+        if (mifare_status == MFRC522::STATUS_OK) {
+            for (int i = 0; i < 6; i++) //key B
+                mifare_key.keyByte[i] = card.key[i + 6];
+            mifare_status = rfid.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_B, sectors[card.sector], &mifare_key, &(rfid.uid));
+            if (mifare_status == MFRC522::STATUS_OK) {
+                return card;
+            }
+        }
+        if (not rfid.PICC_IsNewCardPresent() or not rfid.PICC_ReadCardSerial())
+            break;
+    }
+    return Card();
+}
+
+bool Library::write_key_on_card(Card* card) {
+    if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
         if (check_card()) {
             logger->log("This card is learned before.");
             rfid.PICC_HaltA();
@@ -80,33 +99,39 @@ bool Library::write_key_on_card(Card card) {
             return false;
         }
         //find a blank sector:
-        for (int i = 0; i < 6; i++)
-            mifare_key.keyByte[i] = 0xFF; // Default key in new cards
         int sector_number = 0;
         while (true) {
+            for (int i = 0; i < 6; i++)
+                mifare_key.keyByte[i] = 0xFF; // Default key in new cards
             mifare_status = rfid.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, sectors[sector_number], &mifare_key, &(rfid.uid));
             if (mifare_status == MFRC522::STATUS_OK)
                 break;
+            else
+                Serial.println(mifare_status);
             sector_number++;
             if (sector_number == 16) {
                 logger->log("Can not find an empty sector.");
                 return false;
             }
+            if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
+                logger->log("Card lost at sector " + String(sector_number));
+                return false;
+            }
         }
-        card.sector = sector_number;
+        card->sector = sector_number;
 
         //insert the key in a buffer:
         byte buffer[16];
         const byte Access_Bits[] = { 0x7F, 0x07, 0x88, 0xAA };
         for (int i = 0; i < 6; i++)
-            buffer[i] = card.key[i];
+            buffer[i] = card->key[i];
         for (int i = 0; i < 4; i++)
             buffer[i + 6] = Access_Bits[i];
         for (int i = 0; i < 6; i++)
-            buffer[i + 10] = card.key[i + 6];
+            buffer[i + 10] = card->key[i + 6];
 
         //write on the card:
-        mifare_status = rfid.MIFARE_Write(sectors[card.sector], buffer, 16);
+        mifare_status = rfid.MIFARE_Write(sectors[card->sector], buffer, 16);
         if (mifare_status == MFRC522::STATUS_OK) {
             rfid.PICC_HaltA();
             rfid.PCD_StopCrypto1();
@@ -137,7 +162,6 @@ bool Library::update_cards_on_eeprom() {
     serializeJson(doc, json_string, sizeof(json_string));
     EEPROM.put(600, json_string);
     if (EEPROM.commit()) {
-        logger->log("Card learned successfully.");
         return true;
     }
     logger->log("An error occurred while updating the EEPROM.");
@@ -156,6 +180,7 @@ bool Library::remove_card(int index) {
 void Library::remove_all_cards() {
     cards.clear();
     update_cards_on_eeprom();
+    logger->log("All cards deleted successfully.");
 }
 
 bool Library::check_card() {
@@ -171,10 +196,9 @@ bool Library::check_card() {
                 return true;
             }
         }
-        //TODO: chack is this section is necessary?
         rfid.PICC_HaltA();
         rfid.PCD_StopCrypto1();
-        if (not rfid.PICC_IsNewCardPresent() or not rfid.PICC_ReadCardSerial())
+        if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial())
             break;
     }
     return false;

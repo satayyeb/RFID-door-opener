@@ -7,7 +7,7 @@ Settings::Settings(Logger* logger) {
     Serial.begin(115200);
     EEPROM.begin(2048);
     //for debug:
-    Controller::dumpEEPROM(2048);
+    // Controller::dumpEEPROM(2048);
     if (EEPROM.read(0) != '{') {
         logger->log("No system settings found on EEPROM. Writing defaults on it...");
         write_defaults_into_eeprom();

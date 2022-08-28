@@ -12,6 +12,7 @@
 #include "Logger.h"
 #include "Card.h"
 
+#include <ESP8266WiFiMulti.h>
 
 void handel_card_scan();
 
@@ -35,8 +36,43 @@ void setup() {
 	pinMode(RESET_PIN, INPUT);
 	pinMode(RANDOM_PIN, INPUT);
 	randomSeed(analogRead(RANDOM_PIN));
-}
 
+
+	// Serial.print("Configuring access point...");
+	// WiFi.disconnect(true);
+	// ESP.eraseConfig();
+	// WiFi.mode(WIFI_AP);
+	// WiFi.softAP("ali", "asdfghjk", 1); // stick a channel 1 in there, and it still fails...
+
+	// // WiFi.setOutputPower(20.5);
+	// // WiFi.setAutoConnect(false);
+	// // WiFi.persistent(false);
+	// // WiFi.setPhyMode(WIFI_PHY_MODE_11B);
+	// // WiFi.mode(WIFI_AP);
+	// delay(300);
+	// IPAddress myIP = WiFi.softAPIP();
+	// Serial.print("AP IP address: ");
+	// Serial.println(myIP);
+
+
+	WiFi.begin("tel", "hajiRouterHamRouterHayeGhadim");
+
+	Serial.println("Connecting ...");
+	while (WiFi.status() != WL_CONNECTED) {
+		delay(250);
+		Serial.print('.');
+	}
+	Serial.println('\n');
+	Serial.print("Connected to ");
+	Serial.println(WiFi.SSID());
+	Serial.print("IP address:\t");
+	Serial.println(WiFi.localIP());
+
+
+	webserver.configure_server_routings();
+	webserver.server.begin();
+
+}
 
 unsigned long timer;
 unsigned long lockMillis;
@@ -44,11 +80,34 @@ int count_false_cards = 0;
 bool RFID_lock = false;
 bool last_reset_pin_state = LOW;
 
+
 void loop() {
+
+	if (Serial.available()) {
+		char command = Serial.read();
+		if (command == 'm') {
+			library.is_modifying = true;
+			Serial.println("locked for modifying");
+		}
+		if (command == 'e') {
+			library.is_modifying = false;
+			Serial.println("unlocked");
+		}
+		else if (command == 'l') {
+			Card card("test card");
+			library.add_card(&card);
+		}
+		else if (command == 'r') {
+			library.reset_card();
+		}
+		else if (command == 'd') {
+			controller.dumpEEPROM(2048);
+		}
+	}
+
 	// handel http request:
 	webserver.handelRequest();
 
-	
 	if (!library.is_modifying) {
 		// handel scaned card:
 		if (library.rfid.PICC_IsNewCardPresent() and library.rfid.PICC_ReadCardSerial()) {

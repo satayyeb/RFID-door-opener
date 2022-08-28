@@ -1,9 +1,9 @@
-function loadHeaderAndFooter(){
-    load('header.html','header');
-    load('footer.html','footer');
+function loadHeaderAndFooter() {
+    load('header.html', 'header');
+    load('footer.html', 'footer');
 }
 
-function load(file, id){
+function load(file, id) {
     var xhr = new XMLHttpRequest();
     xhr.open('GET', file, true);
     xhr.onreadystatechange = function () {
@@ -30,6 +30,13 @@ function addText(tag, text) {
     const newTag = document.createElement(tag);
     const textInTag = document.createTextNode(text);
     newTag.appendChild(textInTag);
+    const element = document.getElementById("main");
+    element.appendChild(newTag);
+}
+
+function addBlankTag(tag, id) {
+    const newTag = document.createElement(tag);
+    newTag.setAttribute('id', id);
     const element = document.getElementById("main");
     element.appendChild(newTag);
 }
