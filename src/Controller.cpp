@@ -1,33 +1,26 @@
 #include "Controller.h"
 
 
-Controller::Controller(Settings* settings, Library* library, Logger* logger) {
-    this->settings = settings;
-    this->library = library;
-    this->logger = logger;
-}
-
-
-void Controller::reboot() {
+void reboot() {
     ESP.restart();
 }
 
 
-void Controller::open_door() {
+void open_door() {
     digitalWrite(DOOR_RELAY, HIGH);
     delay(400);
     digitalWrite(DOOR_RELAY, LOW);
 }
 
 
-void Controller::factory_reset() {
-    settings->write_defaults_into_eeprom();
-    library->remove_all_cards();
+void factory_reset() {
+    settings.write_defaults_into_eeprom();
+    library.remove_all_cards();
     reboot();
 }
 
 
-void Controller::dumpEEPROM(int size) {
+void dumpEEPROM(int size) {
     Serial.println("Dumping the eeprom:");
     byte ch;
     String str = "";

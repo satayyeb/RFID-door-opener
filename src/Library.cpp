@@ -1,20 +1,19 @@
 #include "Library.h"
-#include "Controller.h"
+#include "GlobalObjects.h"
 
 
-Library::Library(Logger* logger) {
-    this->logger = logger;
+Library::Library() {
     rfid = MFRC522(SS_MFRC, RST_MFRC);
     // Init MFRC522
     SPI.begin();
     rfid.PCD_Init();
-    logger->log("Loading cards from EEPROM...");
-    char json_string[1000];
+    Logger.log("Loading cards from EEPROM...");
+    char json_string[3000];
     EEPROM.get(600, json_string);
-    StaticJsonDocument<1000> doc;
+    StaticJsonDocument<3000> doc;
     DeserializationError error = deserializeJson(doc, json_string);
     if (error != DeserializationError::Ok)
-        logger->log("There is no cards in the EEPROM.");
+        Logger.log("There is no cards in the EEPROM.");
     else {
         for (JsonObject card : doc["cards"].as<JsonArray>()) {
             const char* card_name = card["card_name"];
@@ -30,11 +29,15 @@ std::vector<Card> Library::getCards() {
 }
 
 bool Library::add_card(Card* card) {
-    //TODO: eeprom full check
+    //eeprom full check
+    if (cards.size() >= 20) {
+        Logger.log("You have reached the limit of learning 20 cards. To unlock this limit update the firmware.");
+        return false;
+    }
     if (write_key_on_card(card)) {
         cards.push_back(*card);
         if (update_cards_on_eeprom()) {
-            logger->log("Card learned successfully.");
+            Logger.log("Card learned successfully. Your card name is: " + card->card_name);
             return true;
         }
     }
@@ -56,18 +59,18 @@ bool Library::reset_card() {
                         break;
                     }
                 update_cards_on_eeprom();
-                logger->log("The card has been reset successfully.");
+                Logger.log("The card has been reset successfully.");
                 return true;
             }
-            logger->log("An error occurred while reseting the card.");
+            Logger.log("An error occurred while reseting the card.");
             return false;
         }
         else {
-            logger->log("Can not reset an unknown card.");
+            Logger.log("Can not reset an unknown card.");
             return false;
         }
     }
-    logger->log("Card not detected for reseting.");
+    Logger.log("Card not detected for reseting.");
     return false;
 }
 
@@ -93,7 +96,7 @@ Card Library::get_card_by_scan() {
 bool Library::write_key_on_card(Card* card) {
     if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
         if (check_card()) {
-            logger->log("This card is learned before.");
+            Logger.log("This card is learned before.");
             rfid.PICC_HaltA();
             rfid.PCD_StopCrypto1();
             return false;
@@ -106,15 +109,13 @@ bool Library::write_key_on_card(Card* card) {
             mifare_status = rfid.PCD_Authenticate(MFRC522::PICC_CMD_MF_AUTH_KEY_A, sectors[sector_number], &mifare_key, &(rfid.uid));
             if (mifare_status == MFRC522::STATUS_OK)
                 break;
-            else
-                Serial.println(mifare_status);
             sector_number++;
             if (sector_number == 16) {
-                logger->log("Can not find an empty sector.");
+                Logger.log("Can not find an empty sector.");
                 return false;
             }
             if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) {
-                logger->log("Card lost at sector " + String(sector_number));
+                Logger.log("Card lost at sector " + String(sector_number));
                 return false;
             }
         }
@@ -135,20 +136,20 @@ bool Library::write_key_on_card(Card* card) {
         if (mifare_status == MFRC522::STATUS_OK) {
             rfid.PICC_HaltA();
             rfid.PCD_StopCrypto1();
-            logger->log("Writing on card was successfull.");
+            Logger.log("Writing on card was successfull.");
             return true;
         }
         else {
-            logger->log("Can not Write on card.");
+            Logger.log("Can not Write on card.");
             return false;
         }
     }
-    logger->log("Card not detected for learning.");
+    Logger.log("Card not detected for learning.");
     return false;
 }
 
 bool Library::update_cards_on_eeprom() {
-    StaticJsonDocument<1000> doc;
+    StaticJsonDocument<3000> doc;
     JsonArray cardsArray = doc.createNestedArray("cards");
     for (Card card : cards) {
         JsonObject record = cardsArray.createNestedObject();
@@ -158,13 +159,13 @@ bool Library::update_cards_on_eeprom() {
         for (int i = 0; i < 12; i++)
             key.add(card.key[i]);
     }
-    char json_string[1000] = { '\0' };
+    char json_string[3000] = { '\0' };
     serializeJson(doc, json_string, sizeof(json_string));
     EEPROM.put(600, json_string);
     if (EEPROM.commit()) {
         return true;
     }
-    logger->log("An error occurred while updating the EEPROM.");
+    Logger.log("An error occurred while updating the EEPROM.");
     return false;
 }
 
@@ -172,7 +173,7 @@ bool Library::remove_card(int index) {
     cards.erase(cards.begin() + index);
     //Exception handling is disabled. So this exception cannot be handled. Be careful when using this function.
     //If you don't see next print, the application has aborted by an out of index error.
-    logger->log("Card removed successfully.");
+    Logger.log("Card removed successfully.");
     update_cards_on_eeprom();
     return true;
 }
@@ -180,7 +181,7 @@ bool Library::remove_card(int index) {
 void Library::remove_all_cards() {
     cards.clear();
     update_cards_on_eeprom();
-    logger->log("All cards deleted successfully.");
+    Logger.log("All cards deleted successfully.");
 }
 
 bool Library::check_card() {
@@ -203,3 +204,4 @@ bool Library::check_card() {
     }
     return false;
 }
+

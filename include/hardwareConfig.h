@@ -1,3 +1,5 @@
+#pragma once
+
 // defines:
 // Don't use D8 pin. using it causes uploading troubles.
 #define LED_RED     D0

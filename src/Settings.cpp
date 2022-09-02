@@ -1,30 +1,29 @@
 #include "Settings.h"
-#include "Controller.h"
+#include "GlobalObjects.h"
 
 
-Settings::Settings(Logger* logger) {
-    this->logger = logger;
-    Serial.begin(115200);
-    EEPROM.begin(2048);
+Settings::Settings() {
+    EEPROM.begin(4096);
     //for debug:
     // Controller::dumpEEPROM(2048);
     if (EEPROM.read(0) != '{') {
-        logger->log("No system settings found on EEPROM. Writing defaults on it...");
+        Logger.log("No system settings found on EEPROM. Writing defaults on it...");
         write_defaults_into_eeprom();
     }
     load_settings_from_eeprom();
 }
 
 void Settings::load_settings_from_eeprom() {
-    logger->log("Loading system settings from EEPROM...");
+    Logger.log("Loading system settings from EEPROM...");
     char json_string[300];
     EEPROM.get(0, json_string);
     StaticJsonDocument<300> doc;
     DeserializationError error = deserializeJson(doc, json_string);
     if (error != DeserializationError::Ok) {
-        logger->log("An error occurred during deserializing system settings. error: " + String(error.f_str()));
+        Logger.log("An error occurred during deserializing system settings. error: " + String(error.f_str()));
         exit(-1);
     }
+    String ali = "lnasdk";
     ip.fromString(String(doc["ip"]));
     wifi_ssid = String(doc["wifi_ssid"]);
     wifi_pass = String(doc["wifi_pass"]);
@@ -57,3 +56,4 @@ void Settings::update_settings_in_eeprom() {
     EEPROM.put(0, json_string);
     EEPROM.commit();
 }
+

@@ -2,15 +2,13 @@
 
 #include <SPI.h>
 #include <MFRC522.h>
-#include "Card.h"
 #include "hardwareConfig.h"
-#include "Logger.h"
+#include "Card.h"
 
 
 
 class Library {
 private:
-    Logger* logger;
     MFRC522::MIFARE_Key mifare_key;
     MFRC522::StatusCode mifare_status;
     std::vector<Card> cards;
@@ -19,7 +17,7 @@ private:
     bool update_cards_on_eeprom();
 public:
     MFRC522 rfid;
-    Library(Logger* logger);
+    Library();
     std::vector<Card> getCards();
     bool is_modifying = false;
     bool check_card();
@@ -29,5 +27,4 @@ public:
     void remove_all_cards();
     Card get_card_by_scan();
 };
-
 
