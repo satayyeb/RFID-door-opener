@@ -45,57 +45,39 @@ void Webserver::handelRequest() {
     server.handleClient();
 }
 
+String get_file_extension(String file_name) {
+    int index = file_name.lastIndexOf(".");
+    return file_name.substring(index + 1);
+}
 
 void Webserver::configure_server_routings() {
-    server.on("/backup.html", [&]()
-        { server.send(200, "text/html", get_file("backup.html")); });
-    server.on("/footer.html", [&]()
-        { server.send(200, "text/html", get_file("footer.html")); });
-    server.on("/form.html", [&]()
-        { server.send(200, "text/html", get_file("form.html")); });
-    server.on("/header.html", [&]()
-        { server.send(200, "text/html", get_file("header.html")); });
-    server.on("/import.html", [&]()
-        { server.send(200, "text/html", get_file("import.html")); });
     server.on("/", [&]() {
         server.send(200, "text/html", get_file("index.html"));
         library.is_modifying = false;
         });
-    server.on("/login-settings.html", [&]()
-        { server.send(200, "text/html", get_file("login-settings.html")); });
     server.on("/RFID.html", [&]() {
         server.send(200, "text/html", get_file("RFID.html"));
         library.is_modifying = true;
         });
-    server.on("/select-card-form.html", [&]()
-        { server.send(200, "text/html", get_file("select-card-form.html")); });
     server.on("/system.html", [&]() {
         server.send(200, "text/html", get_file("system.html"));
         library.is_modifying = false;
         });
-    server.on("/update-firmware.html", [&]()
-        { server.send(200, "text/html", get_file("update-firmware.html")); });
-    server.on("/wifi-settings.html", [&]()
-        { server.send(200, "text/html", get_file("wifi-settings.html")); });
-
-
-    // server.on("/favicon.ico", [&]() {
-    //     server.send(200, "image/png", get_file("favicon.ico"));
-    //     });
-
-    server.on("/style.css", [&]()
-        { server.send(200, "text/css", get_file("style.css")); });
-
-
-    server.on("/js/home-script.js", [&]()
-        { server.send(200, "application/javascript", get_file("js/home-script.js")); });
-    server.on("/js/loader.js", [&]()
-        { server.send(200, "application/javascript", get_file("js/loader.js")); });
-    server.on("/js/rfid-script.js", [&]()
-        { server.send(200, "application/javascript", get_file("js/rfid-script.js")); });
-    server.on("/js/system-script.js", [&]()
-        { server.send(200, "application/javascript", get_file("js/system-script.js")); });
-
+    server.onNotFound([&]() {
+        String file_content = get_file(server.uri());
+        String file_type = get_file_extension(server.uri());
+        if (file_type == "html")
+            server.send(200, "text/html", file_content);
+        else if (file_type == "css")
+            server.send(200, "text/css", file_content);
+        else if (file_type == "js")
+            server.send(200, "application/javascript", file_content);
+        else if (file_type == "ico")  //TODO: add favicon.ico
+            server.send(404, "text/html", "favicon not found");
+        else
+            server.send(200, "text/html", file_content);
+        });
+    ///commands:
     server.on("/open", [&]() {
         server.sendHeader("Location", "/");
         server.send(301, "text/html", "The door open successfully.");
@@ -127,6 +109,16 @@ void Webserver::configure_server_routings() {
             html += "<li>" + card.card_name + "</li>\n";
         html + "</ul>";
         server.send(200, "text/html", html);
+        });
+    server.on("/get-cards-in-json", [&]() {
+        //TODO: this is static memory size and may has errors fix it later.
+        StaticJsonDocument<1000> doc;
+        JsonArray cards = doc.createNestedArray("cards");
+        for (Card card : library.getCards())
+            cards.add(card.card_name);
+        String json;
+        serializeJson(doc, json);
+        server.send(200, "text/json", json);
         });
 }
 

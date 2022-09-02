@@ -35,7 +35,19 @@ function reset() {
 
 function prepareDelete() {
     clearMain();
-    load('select-card-form.html', 'main');
+    fetch('/get-cards-in-json')
+        .then((response) => response.json())
+        .then((json) => {
+            const obj = JSON.parse(json);
+            console.log(obj);
+            console.log(obj.cards);
+            let str = "";
+            obj.cards.forEach(card => {
+                str += console.log(card) + " / ";
+            });
+            document.getElementById('message').innerHTML = "<p>" + str + "</p>";
+        })
+    // load('select-card-form.html', 'main');
     addBlankTag('p', 'message');
 }
 
